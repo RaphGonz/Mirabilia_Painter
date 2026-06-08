@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Phase 1 Plan 01 complete
-last_updated: "2026-06-08T21:12:00.000Z"
-last_activity: 2026-06-08 — Plan 01-01 executed; config.py + palette.py + Wave 0 test scaffold committed
+stopped_at: Phase 1 Plan 02 — checkpoint:human-verify (Task 2 visual gate)
+last_updated: "2026-06-08T21:27:00.000Z"
+last_activity: 2026-06-08 — Plan 01-02 Task 1 committed (renderer.py 14033ca); awaiting visual approval of test_stroke.png
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 1
+  total_plans: 2
   completed_plans: 1
-  percent: 5
+  percent: 8
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 ## Current Position
 
 Phase: 1 of 5 (Foundation)
-Plan: 1 of TBD in current phase (Plan 01 complete)
-Status: In progress — Plan 02 (renderer.py) is next
-Last activity: 2026-06-08 — Plan 01-01 complete; config.py + palette.py + Wave 0 test scaffold
+Plan: 2 of TBD in current phase (Plan 02 at checkpoint — Task 2 visual gate)
+Status: In progress — Plan 02 Task 1 complete (14033ca); awaiting visual approval of test_stroke.png
+Last activity: 2026-06-08 — Plan 01-02 Task 1 committed (renderer.py); draw() passes all 8 unit tests
 
 Progress: [█░░░░░░░░░] 5%
 
@@ -67,6 +67,9 @@ Recent decisions affecting current work:
 - Plan 01-01: _PALETTE_SRGB is a 6-color placeholder; user must replace with actual ~40 physical paint mixer colors
 - Plan 01-01: project_color raises ValueError for unsupported colorspace (explicit error contract)
 - Plan 01-01: tests/test_renderer.py is RED by design until Plan 02 implements renderer.py
+- Plan 01-02: Subpixel strokes (w/h < ~0.032 at 64x64) return unmodified canvas — correct hard-rasterizer behavior
+- Plan 01-02: theta_01.item() * math.pi — extract scalar before math.cos/sin to avoid TypeError on 0-dim tensor
+- Plan 01-02: torch.meshgrid with indexing='ij' — mandatory explicit kwarg for correctness and no UserWarning
 
 ### Pending Todos
 
@@ -85,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-08T21:12:00.000Z
-Stopped at: Completed 01-01-PLAN.md (config.py + palette.py + test scaffold)
-Resume file: .planning/phases/01-foundation/01-02-PLAN.md
+Last session: 2026-06-08T21:27:00.000Z
+Stopped at: 01-02-PLAN.md Task 2 checkpoint:human-verify — visual gate for test_stroke.png
+Resume file: .planning/phases/01-foundation/01-02-PLAN.md (resume after visual approval)
