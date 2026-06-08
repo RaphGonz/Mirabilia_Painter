@@ -30,7 +30,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. `palette.py` accepts a manual RGB list and `project_color(rgb, colorspace)` returns the nearest palette color for all three colorspaces (`rgb`, `oklab`, `hsv`) without error
   3. `renderer.py` `draw(canvas, stroke_params)` renders a visually correct opaque oriented rectangle on the canvas for arbitrary `(cx, cy, w, h, θ, r, g, b)` params including edge cases (thin strokes, full-canvas strokes, extreme rotations)
   4. All three modules are importable with no circular dependencies and no autograd graph attached to the hard rasterizer output
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 01-01-PLAN.md — Scaffold + config.py constants + palette.py projection + Wave 0 test scaffold (FOUND-01, FOUND-02)
+- [ ] 01-02-PLAN.md — renderer.py hard rasterizer (oriented rectangle, pure PyTorch, no autograd) + visual gate (FOUND-03)
 
 ### Phase 2: Neural Renderer
 **Goal**: Neural renderer R is pre-trained, visually validated on out-of-distribution strokes, frozen, and verified to stay frozen — acting as a hard gate before any RL work begins.
