@@ -62,10 +62,21 @@
 
 ## Traceability
 
-| REQ-ID | Phase |
-|--------|-------|
-| FOUND-01, FOUND-02, FOUND-03 | Phase 1 — Foundation |
-| REND-01, REND-02, REND-03 | Phase 2 — Neural Renderer |
-| DDPG-01, DDPG-02, DDPG-03, DDPG-04 | Phase 3 — DDPG Models |
-| TRAIN-01, TRAIN-02, TRAIN-03, TRAIN-04 | Phase 4 — Training Loop |
-| EVAL-01, EVAL-02 | Phase 5 — Eval & Timelapse |
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| FOUND-01 | Phase 1 — Foundation | Pending |
+| FOUND-02 | Phase 1 — Foundation | Pending |
+| FOUND-03 | Phase 1 — Foundation | Pending |
+| REND-01 | Phase 2 — Neural Renderer | Pending |
+| REND-02 | Phase 2 — Neural Renderer | Pending |
+| REND-03 | Phase 2 — Neural Renderer | Pending |
+| DDPG-01 | Phase 3 — DDPG Models | Pending |
+| DDPG-02 | Phase 3 — DDPG Models | Pending |
+| DDPG-03 | Phase 3 — DDPG Models | Pending |
+| DDPG-04 | Phase 3 — DDPG Models | Pending |
+| TRAIN-01 | Phase 4 — Training Loop | Pending |
+| TRAIN-02 | Phase 4 — Training Loop | Pending |
+| TRAIN-03 | Phase 4 — Training Loop | Pending |
+| TRAIN-04 | Phase 4 — Training Loop | Pending |
+| EVAL-01 | Phase 5 — Eval & Timelapse | Pending |
+| EVAL-02 | Phase 5 — Eval & Timelapse | Pending |
