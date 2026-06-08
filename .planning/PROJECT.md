@@ -64,6 +64,8 @@ L'agent produit un timelapse demo-able : on peut filmer l'IA qui peint une image
 | Projection palette nearest-neighbor (pas Gumbel-softmax) | DDPG = actions continues ; Gumbel-softmax inadapté | — Pending |
 | Rasterizer dur conservé | Vérité terrain pour pré-entraîner R + rendu final net | — Pending |
 | 64×64 pour démarrer | Itération rapide — montée en résolution = évolution explicite | — Pending |
+| Palette saisie manuellement depuis un mixeur physique | Les couleurs reflètent une vraie palette de peinture physique ; pas de palette algorithmique prédéfinie | — Pending |
+| Colorspace de projection configurable (RGB / okLab / HSV) | okLab et HSV évitent les aberrations perceptuelles de la distance Euclidienne RGB ; choix configurable dans config.py | — Pending |
 
 ## Evolution
 
