@@ -4,8 +4,8 @@
 
 ### Foundation (FOUND)
 
-- [ ] **FOUND-01**: Le module `config.py` expose les constantes `IMG_SIZE=64`, `STROKE_DIM=8`, `STROKES_PER_STEP=5`, `N_STROKES` et `IMAGE_RANGE=(0.0, 1.0)` accessibles depuis tous les modules
-- [ ] **FOUND-02**: Le module `palette.py` définit la palette comme une simple liste RGB éditable manuellement (les couleurs sont saisies par l'utilisateur depuis un mixeur de peinture physique) et expose `project_color(rgb, colorspace) → palette_rgb` avec `colorspace ∈ {"rgb", "oklab", "hsv"}` — nearest-neighbor dans l'espace choisi ; `colorspace` configurable dans `config.py`
+- [x] **FOUND-01**: Le module `config.py` expose les constantes `IMG_SIZE=64`, `STROKE_DIM=8`, `STROKES_PER_STEP=5`, `N_STROKES` et `IMAGE_RANGE=(0.0, 1.0)` accessibles depuis tous les modules
+- [x] **FOUND-02**: Le module `palette.py` définit la palette comme une simple liste RGB éditable manuellement (les couleurs sont saisies par l'utilisateur depuis un mixeur de peinture physique) et expose `project_color(rgb, colorspace) → palette_rgb` avec `colorspace ∈ {"rgb", "oklab", "hsv"}` — nearest-neighbor dans l'espace choisi ; `colorspace` configurable dans `config.py`
 - [ ] **FOUND-03**: `renderer.py` (dur) expose `draw(canvas, stroke_params) → canvas` qui dessine un rectangle opaque orienté avec `params=(cx, cy, w, h, θ, r, g, b)` en pure tensor ops, sans autograd
 
 ### Neural Renderer (REND)
@@ -64,8 +64,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | Phase 1 — Foundation | Pending |
-| FOUND-02 | Phase 1 — Foundation | Pending |
+| FOUND-01 | Phase 1 — Foundation | Complete (Plan 01-01) |
+| FOUND-02 | Phase 1 — Foundation | Complete (Plan 01-01) |
 | FOUND-03 | Phase 1 — Foundation | Pending |
 | REND-01 | Phase 2 — Neural Renderer | Pending |
 | REND-02 | Phase 2 — Neural Renderer | Pending |
