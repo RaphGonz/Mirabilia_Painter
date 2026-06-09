@@ -14,11 +14,13 @@ L'agent produit un timelapse demo-able : on peut filmer l'IA qui peint une image
 
 ### Validated
 
-(Aucun encore — à valider à l'envoi)
+- [x] Renderer dur fonctionnel : `draw(canvas, params)` → rectangle opaque orienté sur canvas — Validé en Phase 1 (FOUND-03)
+- [x] Constants partagées stables : `config.py` (IMG_SIZE, STROKE_DIM, STROKES_PER_STEP, N_STROKES, IMAGE_RANGE) — Validé en Phase 1 (FOUND-01)
+- [x] Projection palette colorspace-aware : `project_color(rgb, colorspace)` pour rgb/oklab/hsv — Validé en Phase 1 (FOUND-02)
 
 ### Active
 
-- [ ] Renderer dur fonctionnel : `draw(canvas, params)` → rectangle opaque orienté sur canvas
+- [ ] Renderer neuronal R pré-entraîné : `params → image du trait seul`, repro visuelle validée
 - [ ] Renderer neuronal R pré-entraîné : `params → image du trait seul`, repro visuelle validée
 - [ ] Environnement RL : `reset()` / `step(action) → (state, reward, done)`, canvas 64×64 RGB
 - [ ] DDPG complet : actor, critic, target networks, replay buffer, boucle d'entraînement
@@ -85,4 +87,4 @@ Ce document évolue aux transitions de phase et aux jalons de milestone.
 4. Mettre à jour Context avec état courant
 
 ---
-*Last updated: 2026-06-08 after initialization*
+*Last updated: 2026-06-09 after Phase 1 completion — Walking Skeleton shipped*
