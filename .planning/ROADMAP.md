@@ -45,7 +45,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Visual inspection of R predictions vs. hard rasterizer ground truth on a test set of thin strokes, tilted strokes, frame-edge strokes, and extreme params shows recognizable, non-smeared rectangles — a human reviewer confirms the shapes are plausible
   4. After freeze, an assertion confirms that the L2 norm of all R parameters is identical to the checkpoint norm (no gradient has flowed into R); this assertion passes and is committed as part of the codebase
   5. HARD GATE: Phase 3 does not begin until criteria 3 and 4 are both satisfied and documented
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 02-01-PLAN.md — NeuralRenderer class (FC + bilinear-upsample decoder, no BatchNorm) + Wave 0 shape/range/freeze test scaffold (REND-01)
+- [ ] 02-02-PLAN.md — pretrain_renderer.py (on-the-fly data + 20%% extreme biasing, MSE training to val<0.005), renderer.pkl save, freeze assertion, visual gate hard gate (REND-02, REND-03)
 
 ### Phase 3: DDPG Models
 **Goal**: All four DDPG components — actor, model-based V(s') critic, target networks, and replay buffer — are implemented with correct shapes and architecture, ready for the training loop.
