@@ -55,7 +55,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — NeuralRenderer class (FC + bilinear-upsample decoder, no BatchNorm) + Wave 0 shape/range/freeze test scaffold (REND-01)
+- [x] 02-01-PLAN.md — NeuralRenderer class (FC + bilinear-upsample decoder, no BatchNorm) + Wave 0 shape/range/freeze test scaffold (REND-01)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -113,7 +113,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete | 2026-06-09 |
-| 2. Neural Renderer | 0/TBD | Not started | - |
+| 2. Neural Renderer | 1/2 | In Progress|  |
 | 3. DDPG Models | 0/TBD | Not started | - |
 | 4. Training Loop | 0/TBD | Not started | - |
 | 5. Eval & Timelapse | 0/TBD | Not started | - |
