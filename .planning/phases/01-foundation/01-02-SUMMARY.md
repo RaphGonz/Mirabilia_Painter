@@ -43,8 +43,8 @@ patterns-established:
 requirements-completed: [FOUND-03]
 
 # Metrics
-duration: ~12min
-completed: 2026-06-08
+duration: ~20min
+completed: 2026-06-09
 ---
 
 # Phase 1 Plan 02: Foundation — renderer.py Summary
@@ -53,16 +53,14 @@ completed: 2026-06-08
 
 ## Status
 
-**CHECKPOINT REACHED — awaiting human visual approval (Task 2)**
-
-Task 1 complete and committed. Task 2 (visual gate) is pending human approval of `test_stroke.png`.
+COMPLETE — all tasks done, human visual gate approved.
 
 ## Performance
 
-- **Duration:** ~12 min
+- **Duration:** ~20 min
 - **Started:** 2026-06-08T21:15:00Z
-- **Completed (partial):** 2026-06-08T21:27:00Z
-- **Tasks:** 1 of 2 complete (Task 2 is checkpoint — awaiting visual approval)
+- **Completed:** 2026-06-09
+- **Tasks:** 2 of 2 complete
 - **Files modified:** 1
 
 ## Accomplishments
@@ -70,13 +68,13 @@ Task 1 complete and committed. Task 2 (visual gate) is pending human approval of
 - Implemented `renderer.py` — `draw(canvas, stroke_params)` returns a new (3, H, W) float32 canvas with an opaque oriented rectangle painted via pure PyTorch tensor ops
 - All 8 renderer unit tests pass: shape, no-autograd, paints-pixels, full-canvas, subpixel-empty, values-in-range, extreme-rotations, GPU
 - All 4 import tests pass: config, palette, renderer importable with no circular deps
-- `test_stroke.png` generated at project root for human visual inspection
+- Human visual gate approved: `test_stroke.png` shows a recognizable red rectangle, tilted ~45 degrees (theta=0.25), on black background
+- Walking Skeleton complete: config + palette + renderer importable in a single session; draw() renders a recognizable oriented rectangle
 
 ## Task Commits
 
 1. **Task 1: Implement hard rasterizer draw()** - `14033ca` (feat)
-
-**Plan metadata:** pending (after Task 2 approval)
+2. **Task 2: Human visual gate** - Approved by user ("approved")
 
 ## Files Created/Modified
 
@@ -84,7 +82,7 @@ Task 1 complete and committed. Task 2 (visual gate) is pending human approval of
 
 ## Decisions Made
 
-- Subpixel strokes (w < ~0.032 at 64×64) correctly return the unmodified canvas — this is correct hard-rasterizer behavior, not a bug. The neural renderer pre-trainer (Phase 2) must bias training data away from degenerate strokes.
+- Subpixel strokes (w < ~0.032 at 64x64) correctly return the unmodified canvas — this is correct hard-rasterizer behavior, not a bug. The neural renderer pre-trainer (Phase 2) must bias training data away from degenerate strokes.
 - `theta_01.item() * math.pi` — extract scalar before `math.cos`/`math.sin` to avoid TypeError on 0-dim tensor
 - `torch.meshgrid(ys, xs, indexing='ij')` — always explicit to prevent UserWarning and future silent breakage
 
@@ -119,12 +117,12 @@ No new security-relevant surface introduced. `draw()` operates on in-process flo
 
 - Walking Skeleton complete: `config`, `palette`, `renderer` importable in one session
 - `draw()` stable API — ready for Phase 2 `pretrain_renderer.py` to use as ground truth
-- Pending: human visual approval of `test_stroke.png` (oriented rectangle at theta=0.25)
+- Human visual gate approved: oriented rectangle is recognizable and tracks params correctly
 
 ---
 
 *Phase: 01-foundation*
-*Completed: 2026-06-08 (partial — awaiting Task 2 visual gate approval)*
+*Completed: 2026-06-09*
 
 ## Self-Check: PASSED
 
@@ -132,3 +130,4 @@ No new security-relevant surface introduced. `draw()` operates on in-process flo
 - test_stroke.png: FOUND
 - .planning/phases/01-foundation/01-02-SUMMARY.md: FOUND
 - commit 14033ca: FOUND
+- Human visual gate: APPROVED

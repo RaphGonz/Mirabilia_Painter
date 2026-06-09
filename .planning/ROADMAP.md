@@ -12,7 +12,7 @@ Build a DDPG-based painting agent from scratch in PyTorch that learns to reprodu
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - Config constants, palette projection, and the hard rasterizer
+- [x] **Phase 1: Foundation** - Config constants, palette projection, and the hard rasterizer
 - [ ] **Phase 2: Neural Renderer** - Pre-train R, visual validation hard gate, freeze verification
 - [ ] **Phase 3: DDPG Models** - Actor CNN, model-based V(s') critic, target networks, replay buffer
 - [ ] **Phase 4: Training Loop** - env.py, agent update loop, train.py with 96 parallel envs, exploration noise
@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. All three modules are importable with no circular dependencies and no autograd graph attached to the hard rasterizer output
 **Plans**: 2 plans
 - [x] 01-01-PLAN.md — Scaffold + config.py constants + palette.py projection + Wave 0 test scaffold (FOUND-01, FOUND-02)
-- [ ] 01-02-PLAN.md — renderer.py hard rasterizer (oriented rectangle, pure PyTorch, no autograd) + visual gate (FOUND-03)
+- [x] 01-02-PLAN.md — renderer.py hard rasterizer (oriented rectangle, pure PyTorch, no autograd) + visual gate (FOUND-03)
 
 ### Phase 2: Neural Renderer
 **Goal**: Neural renderer R is pre-trained, visually validated on out-of-distribution strokes, frozen, and verified to stay frozen — acting as a hard gate before any RL work begins.
@@ -89,7 +89,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 1/2 | In progress | - |
+| 1. Foundation | 2/2 | Complete | 2026-06-09 |
 | 2. Neural Renderer | 0/TBD | Not started | - |
 | 3. DDPG Models | 0/TBD | Not started | - |
 | 4. Training Loop | 0/TBD | Not started | - |
