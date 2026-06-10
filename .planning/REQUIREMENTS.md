@@ -17,7 +17,7 @@
 ### DDPG Models (DDPG)
 
 - [x] **DDPG-01**: `models/actor.py` implémente l'acteur CNN : input `(batch, 7, 64, 64)` (canvas+cible+step_channel) → output `(batch, 40)` en [0,1] via sigmoid, représentant les `k=5` traits
-- [ ] **DDPG-02**: `models/critic.py` implémente le critic model-based V(s') : input l'image du next-state rendu `(batch, 6, 64, 64)` → output scalar Q ; PAS Q(s, a) standard (différence critique vs papier)
+- [x] **DDPG-02**: `models/critic.py` implémente le critic model-based V(s') : input l'image du next-state rendu `(batch, 7, 64, 64)` → output scalar V(s') ; PAS Q(s, a) standard (différence critique vs papier)
 - [x] **DDPG-03**: `ddpg/agent.py` crée les target networks (deepcopy de actor et critic), les maintient en `eval()` mode permanent, et implémente le soft update avec `τ=0.005`
 - [x] **DDPG-04**: `ddpg/replay_buffer.py` implémente un buffer circulaire de 200k transitions ; les canvas sont stockés en `uint8` et convertis en `float32` au sample pour économiser la RAM
 
@@ -71,7 +71,7 @@
 | REND-02 | Phase 2 — Neural Renderer | Pending |
 | REND-03 | Phase 2 — Neural Renderer | Pending |
 | DDPG-01 | Phase 3 — DDPG Models | Complete (Plan 03-01) |
-| DDPG-02 | Phase 3 — DDPG Models | Pending |
+| DDPG-02 | Phase 3 — DDPG Models | Complete (Plan 03-03) |
 | DDPG-03 | Phase 3 — DDPG Models | Complete |
 | DDPG-04 | Phase 3 — DDPG Models | Complete |
 | TRAIN-01 | Phase 4 — Training Loop | Pending |
