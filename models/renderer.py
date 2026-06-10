@@ -19,12 +19,12 @@ class NeuralRenderer(nn.Module):
 
     def __init__(self):
         super().__init__()
-        self.fc = nn.Linear(STROKE_DIM, 512)
+        self.fc = nn.Linear(STROKE_DIM, 1024)
 
-        # Stage 1: 2x2 -> 4x4, 128 -> 64 channels
+        # Stage 1: 2x2 -> 4x4, 256 -> 64 channels
         self.stage1 = nn.Sequential(
             nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False),
-            nn.Conv2d(128, 64, 3, padding=1),
+            nn.Conv2d(256, 64, 3, padding=1),
             nn.ReLU(),
         )
         # Stage 2: 4x4 -> 8x8, 64 -> 32 channels
@@ -58,7 +58,7 @@ class NeuralRenderer(nn.Module):
         Returns:
             (batch, 3, IMG_SIZE, IMG_SIZE) stroke image in [0, 1]
         """
-        h = self.fc(x).view(-1, 128, 2, 2)
+        h = self.fc(x).view(-1, 256, 2, 2)
         h = self.stage1(h)
         h = self.stage2(h)
         h = self.stage3(h)
