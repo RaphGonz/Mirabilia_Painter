@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Phase 03 Plan 01 complete — actor implemented (DDPG-01)"
-last_updated: "2026-06-10T13:43:07Z"
-last_activity: 2026-06-10 -- Completed 03-01 (DDPG actor)
+stopped_at: "Phase 03 Plan 02 complete — replay buffer implemented (DDPG-04)"
+last_updated: "2026-06-10T13:48:39Z"
+last_activity: 2026-06-10 -- Completed 03-02 (DDPG replay buffer)
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 8
-  completed_plans: 5
-  percent: 50
+  completed_plans: 6
+  percent: 56
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 ## Current Position
 
 Phase: 03 (ddpg-models) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Executing Phase 03
-Last activity: 2026-06-10 -- Completed 03-01 (DDPG actor, DDPG-01)
+Last activity: 2026-06-10 -- Completed 03-02 (DDPG replay buffer, DDPG-04)
 
-Progress: [█████░░░░░] 50%
+Progress: [█████░░░░░] 56%
 
 ## Performance Metrics
 
@@ -75,6 +75,7 @@ Recent decisions affecting current work:
 - Plan 03-01: Actor output uses torch.sigmoid(self.fc(x)) — clean [0,1] range, no tanh+rescale
 - Plan 03-01: CoordConv inner Conv2d receives 9 channels (7 state + 2 coord grids registered as buffers)
 - Plan 03-01: CoordConv and BasicBlock exported from models/actor.py for reuse by models/critic.py (Plan 03-03)
+- Plan 03-02: ReplayBuffer stores canvas as uint8 (6ch) + scalar float32 step; step tiled to (B,1,H,W) only in sample() — saves ~3.3 GB vs pre-tiled storage at 200k capacity
 
 ### Pending Todos
 
@@ -94,5 +95,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-06-10
-Stopped at: Phase 03 Plan 01 complete — actor implemented (DDPG-01)
-Resume file: .planning/phases/03-ddpg-models/03-02-PLAN.md
+Stopped at: Phase 03 Plan 02 complete — replay buffer implemented (DDPG-04)
+Resume file: .planning/phases/03-ddpg-models/03-03-PLAN.md

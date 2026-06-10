@@ -79,7 +79,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 4 plans
 
 - [x] 03-01-PLAN.md — models/actor.py (ResNet18+CoordConv+BN → (B,40) sigmoid) + tests (DDPG-01)
-- [ ] 03-02-PLAN.md — ddpg/replay_buffer.py (200k numpy ring buffer, uint8 canvas, scalar step) + tests (DDPG-04)
+- [x] 03-02-PLAN.md — ddpg/replay_buffer.py (200k numpy ring buffer, uint8 canvas, scalar step) + tests (DDPG-04)
 - [ ] 03-03-PLAN.md — models/critic.py (ResNet18+CoordConv+WN+TReLU → (B,1) V(s')) + tests (DDPG-02)
 - [ ] 03-04-PLAN.md — ddpg/agent.py (deepcopy target nets, soft update τ=0.005, update_step scaffold) + tests (DDPG-03)
 
@@ -121,6 +121,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete | 2026-06-09 |
 | 2. Neural Renderer | 2/2 | Complete | 2026-06-10 |
-| 3. DDPG Models | 1/4 | In progress | - |
+| 3. DDPG Models | 2/4 | In progress | - |
 | 4. Training Loop | 0/TBD | Not started | - |
 | 5. Eval & Timelapse | 0/TBD | Not started | - |
