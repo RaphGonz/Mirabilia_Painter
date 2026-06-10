@@ -99,8 +99,12 @@ class ReplayBuffer:
             act      : (B, STROKES_PER_STEP * STROKE_DIM) float32
             rew      : (B,) float32
             next_obs : (B, 7, H, W) float32
-            done     : (B,) bool
+            done     : (B,) float32 — 0.0 (not done) or 1.0 (done)
         """
+        if self.size < batch_size:
+            raise ValueError(
+                f"Cannot sample {batch_size} transitions from buffer with only {self.size} stored."
+            )
         idx = np.random.randint(0, self.size, size=batch_size)
 
         # --- Current obs ---
@@ -109,19 +113,19 @@ class ReplayBuffer:
         H, W = canvas.shape[-2], canvas.shape[-1]
         step = torch.from_numpy(self.obs_step[idx]).to(device)
         # Tile scalar step to (B, 1, H, W) — done here only, NOT stored
-        step_ch = step.view(-1, 1, 1, 1).expand(-1, 1, H, W)
+        step_ch = step.view(-1, 1, 1, 1).expand(-1, 1, H, W).contiguous()
         obs = torch.cat([canvas, step_ch], dim=1)  # (B, 7, H, W)
 
         # --- Next obs ---
         n_canvas = torch.from_numpy(self.next_canvas[idx]).float().div(255.0).to(device)
         n_step = torch.from_numpy(self.next_step[idx]).to(device)
-        n_step_ch = n_step.view(-1, 1, 1, 1).expand(-1, 1, H, W)
+        n_step_ch = n_step.view(-1, 1, 1, 1).expand(-1, 1, H, W).contiguous()
         next_obs = torch.cat([n_canvas, n_step_ch], dim=1)  # (B, 7, H, W)
 
         # --- Action / reward / done ---
         act = torch.from_numpy(self.actions[idx]).to(device)
         rew = torch.from_numpy(self.rewards[idx]).to(device)
-        done = torch.from_numpy(self.dones[idx]).to(device)
+        done = torch.from_numpy(self.dones[idx]).float().to(device)  # bool -> float32
 
         return obs, act, rew, next_obs, done
 
