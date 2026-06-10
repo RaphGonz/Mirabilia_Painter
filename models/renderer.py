@@ -21,33 +21,33 @@ class NeuralRenderer(nn.Module):
         super().__init__()
         self.fc = nn.Linear(STROKE_DIM, 1024)
 
-        # Stage 1: 2x2 -> 4x4, 256 -> 64 channels
+        # Stage 1: 2x2 -> 4x4, 256 -> 128 channels
         self.stage1 = nn.Sequential(
             nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False),
-            nn.Conv2d(256, 64, 3, padding=1),
-            nn.ReLU(),
+            nn.Conv2d(256, 128, 3, padding=1),
+            nn.LeakyReLU(0.2),
         )
-        # Stage 2: 4x4 -> 8x8, 64 -> 32 channels
+        # Stage 2: 4x4 -> 8x8, 128 -> 32 channels
         self.stage2 = nn.Sequential(
             nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False),
-            nn.Conv2d(64, 32, 3, padding=1),
-            nn.ReLU(),
+            nn.Conv2d(128, 32, 3, padding=1),
+            nn.LeakyReLU(0.2),
         )
         # Stage 3: 8x8 -> 16x16, 32 -> 16 channels
         self.stage3 = nn.Sequential(
             nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False),
             nn.Conv2d(32, 16, 3, padding=1),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
         )
         # Stage 4: 16x16 -> 64x64 — scale_factor=4, NOT 2 (see Pitfall 1 in RESEARCH.md)
         self.stage4 = nn.Sequential(
             nn.Upsample(scale_factor=4, mode='bilinear', align_corners=False),
-            nn.Conv2d(16, 16, 3, padding=1),
-            nn.ReLU(),
+            nn.Conv2d(16, 32, 3, padding=1),
+            nn.LeakyReLU(0.2),
         )
-        # Final: 16 -> 3 channels, Sigmoid for [0, 1] output
+        # Final: 32 -> 3 channels, Sigmoid for [0, 1] output
         self.final = nn.Sequential(
-            nn.Conv2d(16, 3, 1),
+            nn.Conv2d(32, 3, 1),
             nn.Sigmoid(),
         )
 

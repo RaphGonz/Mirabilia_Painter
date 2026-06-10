@@ -19,7 +19,7 @@ from models.renderer import NeuralRenderer
 # ---------------------------------------------------------------------------
 TOTAL_PAIRS = 1_000_000
 BATCH_SIZE = 1024
-EXTREME_FRAC = 0.2
+EXTREME_FRAC = 0.35
 N_STEPS = TOTAL_PAIRS // BATCH_SIZE   # 976
 QUICK_STEPS = 200                      # autoresearch budget (~3-5 min on local GPU)
 VAL_EVERY = 50
@@ -230,6 +230,7 @@ def main() -> None:
     # Build model and optimizer
     R = NeuralRenderer().to(device)
     optimizer = torch.optim.Adam(R.parameters(), lr=1e-3)
+    # NOTE: verbose keyword arg removed in PyTorch 2.x (RESEARCH.md Pitfall 2 — raises TypeError)
     # NOTE: verbose keyword arg removed in PyTorch 2.x (RESEARCH.md Pitfall 2 — raises TypeError)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode='min', factor=0.5, patience=5
