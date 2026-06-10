@@ -1,66 +1,73 @@
-# Source: CONTEXT.md D-09/D-10/D-11 + in-session verification (2026-06-09)
-# NeuralRenderer — differentiable CNN decoder. Input (batch, 8) → output (batch, 3, IMG_SIZE, IMG_SIZE).
-# No BatchNorm (D-11). No Dropout. Frozen during RL training (see env.py load_frozen_renderer).
+import math
 import torch
 import torch.nn as nn
-from config import IMG_SIZE, STROKE_DIM
+from config import IMG_SIZE, STROKE_DIM, RENDERER_BETA
 
 
-class NeuralRenderer(nn.Module):
+class SoftRasterizer(nn.Module):
     """
-    Differentiable neural renderer R.
+    Differentiable soft rectangle rasterizer.
 
-    Maps stroke parameters (batch, STROKE_DIM) to stroke images (batch, 3, IMG_SIZE, IMG_SIZE).
-    Pre-trained against the hard rasterizer; frozen during RL training.
+    Input:  (B, STROKE_DIM=8) stroke params in [0, 1] — (cx, cy, w, h, theta, r, g, b)
+    Output: (B, 3, IMG_SIZE, IMG_SIZE) premultiplied (alpha * color) in [0, 1]
 
-    No BatchNorm (interacts poorly with single-sample inference in env.py).
-    No Dropout.
+    Analytical formula — no training required.
+    Uses sigmoid SDF approximation for differentiable edges:
+        alpha(x,y) = sigmoid((w/2 - |dx'|) / beta) * sigmoid((h/2 - |dy'|) / beta)
+    where (dx', dy') is (dx, dy) rotated by theta.
+
+    beta controls edge softness in pixels:
+        0.5 → ~2px transition (sharp)
+        1.0 → ~4px transition (recommended)
+        2.0 → ~9px transition (very soft)
+
+    compute_alpha(params) exposes the alpha mask separately for env.py compositing.
+    Frozen during RL training (eval + requires_grad=False in load_frozen_renderer).
     """
 
-    def __init__(self):
+    def __init__(self, beta: float = RENDERER_BETA):
         super().__init__()
-        self.fc = nn.Linear(STROKE_DIM, 1024)
+        self.beta = beta
 
-        # Stage 1: 2x2 -> 4x4, 256 -> 128 channels
-        self.stage1 = nn.Sequential(
-            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False),
-            nn.Conv2d(256, 128, 3, padding=1),
-            nn.LeakyReLU(0.2),
-        )
-        # Stage 2: 4x4 -> 8x8, 128 -> 32 channels
-        self.stage2 = nn.Sequential(
-            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False),
-            nn.Conv2d(128, 32, 3, padding=1),
-            nn.LeakyReLU(0.2),
-        )
-        # Stage 3: 8x8 -> 16x16, 32 -> 16 channels
-        self.stage3 = nn.Sequential(
-            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False),
-            nn.Conv2d(32, 16, 3, padding=1),
-            nn.LeakyReLU(0.2),
-        )
-        # Stage 4: 16x16 -> 64x64 — scale_factor=4, NOT 2 (see Pitfall 1 in RESEARCH.md)
-        self.stage4 = nn.Sequential(
-            nn.Upsample(scale_factor=4, mode='bilinear', align_corners=False),
-            nn.Conv2d(16, 32, 3, padding=1),
-            nn.LeakyReLU(0.2),
-        )
-        # Final: 32 -> 3 channels, Sigmoid for [0, 1] output
-        self.final = nn.Sequential(
-            nn.Conv2d(32, 3, 1),
-            nn.Sigmoid(),
-        )
+        # Pixel coordinate grids — buffers move to device with .to(device)
+        y = torch.arange(IMG_SIZE, dtype=torch.float32)
+        x = torch.arange(IMG_SIZE, dtype=torch.float32)
+        yy, xx = torch.meshgrid(y, x, indexing='ij')
+        self.register_buffer('xx', xx.unsqueeze(0).contiguous())  # (1, H, W)
+        self.register_buffer('yy', yy.unsqueeze(0).contiguous())  # (1, H, W)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Args:
-            x: (batch, STROKE_DIM) stroke params in [0, 1]
-        Returns:
-            (batch, 3, IMG_SIZE, IMG_SIZE) stroke image in [0, 1]
-        """
-        h = self.fc(x).view(-1, 256, 2, 2)
-        h = self.stage1(h)
-        h = self.stage2(h)
-        h = self.stage3(h)
-        h = self.stage4(h)
-        return self.final(h)
+    def _alpha(self, params: torch.Tensor) -> torch.Tensor:
+        B = params.shape[0]
+        cx    = params[:, 0] * IMG_SIZE
+        cy    = params[:, 1] * IMG_SIZE
+        w     = params[:, 2] * IMG_SIZE
+        h     = params[:, 3] * IMG_SIZE
+        theta = params[:, 4] * math.pi
+
+        dx = self.xx - cx.view(B, 1, 1)
+        dy = self.yy - cy.view(B, 1, 1)
+
+        cos_a = torch.cos(theta).view(B, 1, 1)
+        sin_a = torch.sin(theta).view(B, 1, 1)
+        dx_r =  dx * cos_a + dy * sin_a
+        dy_r = -dx * sin_a + dy * cos_a
+
+        half_w = (w / 2).view(B, 1, 1)
+        half_h = (h / 2).view(B, 1, 1)
+        mask_x = torch.sigmoid((half_w - dx_r.abs()) / self.beta)
+        mask_y = torch.sigmoid((half_h - dy_r.abs()) / self.beta)
+        return mask_x * mask_y  # (B, H, W)
+
+    def forward(self, params: torch.Tensor) -> torch.Tensor:
+        """(B, 8) → (B, 3, H, W) premultiplied stroke image."""
+        alpha = self._alpha(params)  # (B, H, W)
+        color = params[:, 5:8].view(params.shape[0], 3, 1, 1)
+        return alpha.unsqueeze(1) * color  # (B, 3, H, W)
+
+    def compute_alpha(self, params: torch.Tensor) -> torch.Tensor:
+        """(B, 8) → (B, 1, H, W) alpha mask — for env.py compositing."""
+        return self._alpha(params).unsqueeze(1)
+
+
+# Backward-compat alias so Phase 3 and tests can import either name
+NeuralRenderer = SoftRasterizer

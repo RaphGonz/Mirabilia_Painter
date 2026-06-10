@@ -8,8 +8,8 @@ Traits rectangulaires opaques, palette de ~40 couleurs.
 | Décision | Choix retenu | Raison |
 |---|---|---|
 | Forme des traits | Rectangles orientés, opaques | Simplification vs arcs transparents du papier |
-| Renderer | Réseau neuronal `R` (différentiable), pré-entraîné une fois et figé | Rend le rendu différentiable → gradient exploitable par DDPG |
-| Rasterizer dur | Conservé | Vérité terrain pour pré-entraîner `R` + rendu final net |
+| Renderer | **SoftRasterizer** analytique (sigmoid SDF, différentiable), **aucun entraînement requis** | Formule analytique : `alpha = sigmoid((w/2 - |dx'|)/β) * sigmoid((h/2 - |dy'|)/β)`. Différentiable, déterministe, pas de drift. Remplace le CNN neuronal initial après autoresearch (série 1–4). |
+| Rasterizer dur | Conservé | Vérité terrain pour validation visuelle + rendu final net |
 | Couleur | RGB continu en sortie de l'agent, projeté sur la palette (nearest-neighbor L2) en post-traitement | DDPG = actions continues ; Gumbel-softmax inadapté |
 | Agent | DDPG model-free, espace d'action continu | Exigence ; rendu via `R` figé rapproche du model-based du papier |
 | Nombre de traits | Fixe, élevé | Seuil d'arrêt a posteriori (gain L2/trait < ε) plutôt que signal stop appris |
@@ -19,13 +19,12 @@ Traits rectangulaires opaques, palette de ~40 couleurs.
 
 ## Points de vigilance
 
-- **Deux types de "soft blending" à distinguer.**
-  - *Bords flous* (anti-aliasing) : accepté, cosmétique.
-  - *Mélange trait/trait involontaire* : `R` ne sort jamais exactement 0/1, donc en recouvrement les couleurs se mélangent sur une fine bande. Inévitable avec un renderer neuronal. C'est même ce qui rend le gradient exploitable.
-- **Deux rendus, voulu :**
-  - `R` neuronal (flou, différentiable) → pendant l'entraînement RL, pour le gradient.
+- **SoftRasterizer vs Rasterizer dur :**
+  - `SoftRasterizer` (différentiable) → pendant l'entraînement RL, pour le gradient. Bords contrôlés par `beta` (1.0 → ~4px de transition).
   - Rasterizer dur (net, opaque, ordre respecté) → rendu final, en rejouant la liste ordonnée de params.
-- **Écart train/inférence** : un trait "bon" seulement grâce au mélange de bord paraîtra un peu différent une fois rendu net. Négligeable si les traits sont grands devant la bande de flou.
+- **Bords flous — voulu :**
+  - `SoftRasterizer` produit des bords soft par construction (sigmoid SDF). C'est ce qui rend le gradient exploitable. Aucun mélange de couleur parasite : le masque alpha est calculé analytiquement, la couleur n'est jamais interpolée avec le fond — c'est `alpha * color + (1-alpha) * canvas`.
+- **Écart train/inférence** : un trait "bon" avec `SoftRasterizer` aura des bords légèrement flous vs le rasterizer dur. Négligeable si les traits sont grands devant la bande de transition (4px à 64×64).
 - **Occlusion / ordre de composition** : `R` rend *un* trait. La composition de N traits opaques (qui recouvre qui) est une étape séparée, gérée hors réseau par empilement. Le gradient à travers l'ordre de composition reste rugueux — non résolu par `R`.
 - **Projection couleur** : l'agent optimise une couleur continue mais on lui impose la couleur de palette la plus proche à l'inférence → léger écart, faible si palette bien répartie.
 
@@ -71,9 +70,10 @@ paint_ai/
 
 Chaque ligne = un problème probable, le diagnostic, et l'amélioration ciblée. Bon fil narratif pour montrer de la progression.
 
-**Renderer neuronal `R`**
-- *Symptôme : `R` reproduit mal les traits fins/inclinés.* → Augmenter la capacité de `R`, ou passer d'un MLP à un décodeur conv (upsampling), ou enrichir l'échantillonnage de traits au pré-entraînement (couvrir tout l'espace de params).
-- *Symptôme : bords trop flous, rendu final trop différent du canvas d'entraînement.* → Re-seuiller la sortie de `R`, ou entraîner `R` à plus haute résolution puis downsampler.
+**SoftRasterizer**
+- *Symptôme : bords trop flous, traits fins non visibles.* → Réduire `beta` (0.5 → ~2px de transition, plus net). Attention : trop petit = gradients plus abrupts.
+- *Symptôme : gradients instables sur traits très fins.* → Augmenter légèrement `beta`, ou clipper les gradients à l'actor.
+- *Symptôme : écart trop grand entre canvas RL et rendu final dur.* → Acceptable ; c'est structurel. Mitiger en re-seuillant l'alpha à l'inférence ou en passant le canvas dur comme état (au lieu du canvas soft).
 
 **Agent / apprentissage**
 - *Symptôme : l'agent ne converge pas, récompense plate.* → Vérifier l'échelle de la récompense (normaliser), réduire k, ajouter du bruit d'exploration (Ornstein-Uhlenbeck ou gaussien décroissant).

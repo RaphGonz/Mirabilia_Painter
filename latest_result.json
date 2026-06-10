@@ -1,8 +1,8 @@
 {
   "mode": "quick",
   "steps": 200,
-  "final_val_mse": 0.01049512,
-  "baseline_val_mse": 0.08377936,
-  "elapsed_seconds": 31.1,
-  "timestamp": "2026-06-10T12:38:34"
+  "final_val_mse": 0.00899927,
+  "baseline_val_mse": 0.08735022,
+  "elapsed_seconds": 31.4,
+  "timestamp": "2026-06-10T13:07:08"
 }

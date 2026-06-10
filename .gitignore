@@ -53,3 +53,6 @@ Thumbs.db
 # Secrets
 .env
 *.env
+
+# GSD research cache
+.planning/research/.cache/
