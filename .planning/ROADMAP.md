@@ -121,6 +121,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete | 2026-06-09 |
 | 2. Neural Renderer | 2/2 | Complete | 2026-06-10 |
-| 3. DDPG Models | 4/4 | Complete   | 2026-06-10 |
+| 3. DDPG Models | 4/4 | Complete    | 2026-06-10 |
 | 4. Training Loop | 0/TBD | Not started | - |
 | 5. Eval & Timelapse | 0/TBD | Not started | - |
