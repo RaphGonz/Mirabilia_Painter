@@ -64,9 +64,10 @@ def test_capacity():
     # Push past capacity — size must be capped at capacity
     _push_n(buf, _SMALL_CAP + 10)
     assert len(buf) == _SMALL_CAP, f"Expected {_SMALL_CAP}, got {len(buf)}"
-    # ptr wrapped: it equals the number of over-capacity pushes
-    assert buf.ptr == 10 % _SMALL_CAP, (
-        f"ptr should have wrapped to {10 % _SMALL_CAP}, got {buf.ptr}"
+    # ptr wrapped: total pushes = 5 + (capacity+10) = capacity+15, ptr = (capacity+15) % capacity = 15
+    expected_ptr = (5 + _SMALL_CAP + 10) % _SMALL_CAP
+    assert buf.ptr == expected_ptr, (
+        f"ptr should have wrapped to {expected_ptr}, got {buf.ptr}"
     )
 
 
