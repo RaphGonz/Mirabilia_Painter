@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from config import IMG_SIZE, STROKE_DIM, STROKES_PER_STEP
+from config import STROKE_DIM, STROKES_PER_STEP
 
 
 class CoordConv(nn.Module):
@@ -12,29 +12,27 @@ class CoordConv(nn.Module):
     Output: (B, out_channels, H', W')  [H', W' depend on stride/padding]
 
     The inner Conv2d receives (in_channels + 2) input channels.
-    Coordinate grids are registered as buffers so they follow .to(device).
+    Coordinate grids are generated dynamically from the input shape so that
+    CoordConv works correctly at any spatial resolution (resolution ablations,
+    higher-res episodes). No registered buffers — grids are computed on-the-fly
+    and placed on the same device as x.
     """
 
     def __init__(self, in_channels: int, out_channels: int,
                  kernel_size: int = 3, stride: int = 1, padding: int = 1,
                  bias: bool = False):
         super().__init__()
-        H = W = IMG_SIZE
-        # xx: x-coord normalized to [-1, 1], shape (1, 1, H, W)
-        xx = torch.linspace(-1, 1, W).view(1, 1, 1, W).expand(1, 1, H, W)
-        # yy: y-coord normalized to [-1, 1], shape (1, 1, H, W)
-        yy = torch.linspace(-1, 1, H).view(1, 1, H, 1).expand(1, 1, H, W)
-        self.register_buffer('xx', xx.contiguous())
-        self.register_buffer('yy', yy.contiguous())
         # Inner Conv2d receives in_channels + 2 input channels
         self.conv = nn.Conv2d(in_channels + 2, out_channels,
                               kernel_size=kernel_size, stride=stride,
                               padding=padding, bias=bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        B = x.shape[0]
-        xx = self.xx.expand(B, -1, -1, -1)   # (B, 1, H, W)
-        yy = self.yy.expand(B, -1, -1, -1)   # (B, 1, H, W)
+        B, _, H, W = x.shape
+        # Generate normalized coordinate grids dynamically from input H, W.
+        # This correctly handles any spatial resolution — no hardcoded IMG_SIZE.
+        xx = torch.linspace(-1, 1, W, device=x.device).view(1, 1, 1, W).expand(B, 1, H, W)
+        yy = torch.linspace(-1, 1, H, device=x.device).view(1, 1, H, 1).expand(B, 1, H, W)
         x = torch.cat([x, xx, yy], dim=1)    # (B, in_channels+2, H, W)
         return self.conv(x)                   # (B, out_channels, H', W')
 
@@ -88,6 +86,7 @@ class Actor(nn.Module):
     CoordConv and BasicBlock are shared with models/critic.py (Plan 03-03).
     Uses BatchNorm in backbone (actor.train() during gradient updates,
     actor.eval() during rollout — running stats used at batch=1 inference).
+    Design decision D-02: BN in actor is intentional (ResNet18 backbone).
     No weight_norm here — that is the critic's concern.
     """
 
