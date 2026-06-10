@@ -154,6 +154,15 @@ def test_sample_dtype_and_range():
     assert obs.max() <= 1.0, f"obs.max() = {obs.max()} exceeds 1.0"
     assert obs.min() >= 0.0, f"obs.min() = {obs.min()} is negative"
     assert next_obs.max() <= 1.0, f"next_obs.max() = {next_obs.max()} exceeds 1.0"
+    # Validate canvas and step channels independently:
+    # step channel stored as normalised scalar in [0,1] — a raw integer step
+    # index (0-40) would exceed 1.0 but would not be caught by aggregate max.
+    canvas_part = obs[:, :6, :, :]   # 3ch current + 3ch target (uint8/255)
+    step_part   = obs[:, 6:7, :, :]  # normalised step in [0, 1]
+    assert canvas_part.max() <= 1.0, f"canvas channels exceed 1.0: {canvas_part.max()}"
+    assert canvas_part.min() >= 0.0, f"canvas channels below 0.0: {canvas_part.min()}"
+    assert step_part.max() <= 1.0,   f"step channel exceeds 1.0: {step_part.max()}"
+    assert step_part.min() >= 0.0,   f"step channel below 0.0: {step_part.min()}"
 
 
 def test_sample_gpu():
