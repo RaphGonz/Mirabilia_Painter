@@ -1,4 +1,8 @@
 # Source: CONTEXT.md D-04/D-05/D-06/D-07/D-12 + in-session verification (2026-06-09)
+import argparse
+import datetime
+import json
+import time
 import torch
 import torch.nn as nn
 import matplotlib
@@ -17,6 +21,7 @@ TOTAL_PAIRS = 1_000_000
 BATCH_SIZE = 1024
 EXTREME_FRAC = 0.2
 N_STEPS = TOTAL_PAIRS // BATCH_SIZE   # 976
+QUICK_STEPS = 200                      # autoresearch budget (~3-5 min on local GPU)
 VAL_EVERY = 50
 VAL_N = 1000
 
@@ -182,12 +187,15 @@ def main() -> None:
     """
     Supervised pre-training of NeuralRenderer R.
 
-    Pipeline:
+    Modes (--mode):
+      quick  QUICK_STEPS=200 steps, outputs latest_result.json, skips renderer.pkl + visual gate.
+             Used by the autoresearch loop to compare candidate configs quickly (~3-5 min).
+      full   N_STEPS=976 steps (1M pairs), saves renderer.pkl, runs freeze verification + visual gate.
+             Use after autoresearch identifies the best config.
+
+    Pipeline (full):
     1. Pre-generate validation set (VAL_N random pairs) on CPU, move to device
-    2. Train R for N_STEPS steps (TOTAL_PAIRS / BATCH_SIZE = 976 steps)
-       - Each step: 80% uniform + 20% extreme-param batch
-       - Loss: pixel-wise MSE against hard rasterizer targets
-       - Every VAL_EVERY steps: eval val MSE, step scheduler
+    2. Train R for N_STEPS steps — each step: 80% uniform + 20% extreme-param batch
     3. Save R.state_dict() to renderer.pkl
     4. Load renderer.pkl as frozen R (weights_only=True — T-02-PKL)
     5. Assert finite output (T-02-NaN)
@@ -201,8 +209,17 @@ def main() -> None:
     during RL training (soft alpha blend), but are fully opaque at inference (hard rasterizer).
     This is accepted behavior and is documented in paint_ai_design.md.
     """
+    parser = argparse.ArgumentParser(description='Pre-train NeuralRenderer R')
+    parser.add_argument(
+        '--mode', choices=['quick', 'full'], default='full',
+        help='quick: 200 steps, writes latest_result.json; full: 976 steps, saves renderer.pkl',
+    )
+    args = parser.parse_args()
+    n_steps = QUICK_STEPS if args.mode == 'quick' else N_STEPS
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f'Device: {device}')
+    print(f'Device: {device}  |  mode: {args.mode}  |  steps: {n_steps}')
+    t0 = time.perf_counter()
 
     # Pre-generate validation set once (held-out, not used in training)
     print(f'Generating validation set ({VAL_N} pairs) ...')
@@ -224,7 +241,7 @@ def main() -> None:
     print(f'Baseline val MSE (untrained R): {baseline_val_mse:.5f}')
 
     # Training loop
-    pbar = trange(N_STEPS, desc='Pretraining R')
+    pbar = trange(n_steps, desc=f'Pretraining R [{args.mode}]')
     for step in pbar:
         params, targets = make_batch(BATCH_SIZE)
         params = params.to(device)
@@ -251,7 +268,29 @@ def main() -> None:
     # Final validation MSE
     with torch.no_grad():
         final_val_mse = nn.functional.mse_loss(R(val_params), val_targets).item()
-    print(f'\nTraining complete. Final val MSE: {final_val_mse:.6f}')
+    elapsed = time.perf_counter() - t0
+    print(f'\nTraining complete. Final val MSE: {final_val_mse:.6f}  ({elapsed:.1f}s)')
+
+    # ---------------------------------------------------------------------------
+    # Quick mode: write machine-readable result and exit (no renderer.pkl)
+    # ---------------------------------------------------------------------------
+    if args.mode == 'quick':
+        result = {
+            'mode': 'quick',
+            'steps': n_steps,
+            'final_val_mse': round(final_val_mse, 8),
+            'baseline_val_mse': round(baseline_val_mse, 8),
+            'elapsed_seconds': round(elapsed, 1),
+            'timestamp': datetime.datetime.now().isoformat(timespec='seconds'),
+        }
+        with open('latest_result.json', 'w') as f:
+            json.dump(result, f, indent=2)
+        print(f'Result written: latest_result.json  (val MSE {final_val_mse:.6f})')
+        return
+
+    # ---------------------------------------------------------------------------
+    # Full mode: checkpoint, verification, visual gate
+    # ---------------------------------------------------------------------------
     if final_val_mse < 0.005:
         print('Target met: val MSE < 0.005 (REND-02 / ROADMAP Success Criterion 2)')
     else:
@@ -263,10 +302,6 @@ def main() -> None:
     # Save checkpoint — state_dict only (never torch.save(R, ...) — fragile across refactors)
     torch.save(R.state_dict(), 'renderer.pkl')
     print('Saved: renderer.pkl')
-
-    # ---------------------------------------------------------------------------
-    # Post-save verification
-    # ---------------------------------------------------------------------------
 
     # Load frozen R and verify finite output (T-02-NaN)
     cpu_device = torch.device('cpu')
