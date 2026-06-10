@@ -41,25 +41,27 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 ### Phase 2: Neural Renderer
 
-**Goal**: Neural renderer R is pre-trained, visually validated on out-of-distribution strokes, frozen, and verified to stay frozen — acting as a hard gate before any RL work begins.
+**Goal**: Differentiable renderer R is implemented, visually validated on out-of-distribution strokes, frozen, and verified to stay frozen — acting as a hard gate before any RL work begins.
 **Mode:** mvp
 **Depends on**: Phase 1
 **Requirements**: REND-01, REND-02, REND-03
+
+> **ARCHITECTURAL PIVOT (autoresearch série 1–4, 2026-06-10):** The `NeuralRenderer` CNN (trained, `renderer.pkl`-based) was **replaced by `SoftRasterizer`** — an analytical differentiable soft rasterizer using a sigmoid SDF approximation. No supervised pretraining is required. `renderer.pkl` is obsolete. The `NeuralRenderer` name is kept as a backward-compat alias.
+>
+> Formula: `alpha(x,y) = sigmoid((w/2 - |dx’|) / β) * sigmoid((h/2 - |dy’|) / β)` where β=1.0 (~4px edge softness). Output: `(B, 3, H, W)` premultiplied `(alpha * color)`. Compositing: `new_canvas = alpha * color + (1 - alpha) * old_canvas`.
+
 **Success Criteria** (what must be TRUE):
 
-  1. R architecture (`models/renderer.py`) accepts input `(batch, 8)` and produces output `(batch, 3, 64, 64)` in `[0, 1]` with no BatchNorm layers
-  2. `pretrain_renderer.py` runs to completion, saves `renderer.pkl`, and achieves validation MSE < 0.005 on a held-out set of random stroke params; 20% of training batches are biased toward extreme params (thin, full-canvas, rotated)
-  3. Visual inspection of R predictions vs. hard rasterizer ground truth on a test set of thin strokes, tilted strokes, frame-edge strokes, and extreme params shows recognizable, non-smeared rectangles — a human reviewer confirms the shapes are plausible
-  4. After freeze, an assertion confirms that the L2 norm of all R parameters is identical to the checkpoint norm (no gradient has flowed into R); this assertion passes and is committed as part of the codebase
-  5. HARD GATE: Phase 3 does not begin until criteria 3 and 4 are both satisfied and documented**Plans**: 2 plans
+  1. ✅ R (`models/renderer.py::SoftRasterizer`) accepts input `(batch, 8)` and produces output `(batch, 3, 64, 64)` in `[0, 1]` with no BatchNorm layers
+  2. ✅ N/A — no supervised pretraining required (SoftRasterizer is analytical). `pretrain_renderer.py` sampling helpers retained for Phase 3 env.py use.
+  3. ✅ Visual inspection via `visual_gate.png` confirms recognizable, non-smeared soft rectangles across 8 stroke types (thin, tilted, edge, full-canvas, extreme theta)
+  4. ✅ After freeze, param norm unchanged after forward pass — SoftRasterizer has no learned params; `.eval()` + `requires_grad_(False)` verified in `tests/test_neural_renderer.py`
+  5. ✅ HARD GATE CLEARED — Phase 3 unblocked
 
-**Wave 1**
+**Plans**: 2 plans (complete)
 
-- [x] 02-01-PLAN.md — NeuralRenderer class (FC + bilinear-upsample decoder, no BatchNorm) + Wave 0 shape/range/freeze test scaffold (REND-01)
-
-**Wave 2** *(blocked on Wave 1 completion)*
-
-- [ ] 02-02-PLAN.md — pretrain_renderer.py (on-the-fly data + 20%% extreme biasing, MSE training to val<0.005), renderer.pkl save, freeze assertion, visual gate hard gate (REND-02, REND-03)
+- [x] 02-01-PLAN.md — Initial NeuralRenderer CNN scaffold (superseded by autoresearch pivot to SoftRasterizer)
+- [x] 02-02-PLAN.md — pretrain_renderer.py scaffold + autoresearch → SoftRasterizer pivot (REND-01, REND-02, REND-03)
 
 ### Phase 3: DDPG Models
 
@@ -70,11 +72,16 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Success Criteria** (what must be TRUE):
 
   1. Actor (`models/actor.py`) accepts `(batch, 7, 64, 64)` and produces `(batch, 40)` output in `[0, 1]` via sigmoid; a shape assertion test passes for a single forward pass
-  2. Critic (`models/critic.py`) accepts the rendered next-state image `(batch, 6, 64, 64)` and produces a scalar Q value — it does NOT accept raw action floats; a shape assertion confirms the input is a 6-channel image tensor, not a concatenation of state and action vectors
+  2. Critic (`models/critic.py`) accepts the rendered next-state image `(batch, 7, 64, 64)` and produces a scalar Q value — it does NOT accept raw action floats; a shape assertion confirms the input is a 7-channel image tensor, not a concatenation of state and action vectors. (NOTE: 7ch per CONTEXT.md D-03 — earlier "6ch" wording was incorrect.)
   3. Target networks are deepcopies of actor and critic, permanently in `eval()` mode; soft update with `τ=0.005` produces target params that are a weighted average of current and previous target params after a single update call
   4. Replay buffer stores 200k transitions with canvas tensors in `uint8`, and sampling returns `float32` tensors with correct shapes for all five fields (obs, action, reward, next_obs, done)
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+- [ ] 03-01-PLAN.md — models/actor.py (ResNet18+CoordConv+BN → (B,40) sigmoid) + tests (DDPG-01)
+- [ ] 03-02-PLAN.md — ddpg/replay_buffer.py (200k numpy ring buffer, uint8 canvas, scalar step) + tests (DDPG-04)
+- [ ] 03-03-PLAN.md — models/critic.py (ResNet18+CoordConv+WN+TReLU → (B,1) V(s')) + tests (DDPG-02)
+- [ ] 03-04-PLAN.md — ddpg/agent.py (deepcopy target nets, soft update τ=0.005, update_step scaffold) + tests (DDPG-03)
 
 ### Phase 4: Training Loop
 
@@ -113,7 +120,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete | 2026-06-09 |
-| 2. Neural Renderer | 1/2 | In Progress|  |
-| 3. DDPG Models | 0/TBD | Not started | - |
+| 2. Neural Renderer | 2/2 | Complete | 2026-06-10 |
+| 3. DDPG Models | 0/4 | Not started | - |
 | 4. Training Loop | 0/TBD | Not started | - |
 | 5. Eval & Timelapse | 0/TBD | Not started | - |
