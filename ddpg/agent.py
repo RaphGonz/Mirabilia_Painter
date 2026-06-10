@@ -88,7 +88,7 @@ class DDPGAgent:
           with torch.no_grad():
               v_next = critic_target(next_obs)           # (B, 1) stable V(s')
               y = rew.unsqueeze(1) + GAMMA * v_next * (~done.unsqueeze(1))
-          v_pred = critic(next_obs)                      # (B, 1)
+          v_pred = critic(obs)                          # (B, 1) — V(s), NOT next_obs
           critic_loss = F.mse_loss(v_pred, y)
           critic_opt.zero_grad()
           critic_loss.backward()
