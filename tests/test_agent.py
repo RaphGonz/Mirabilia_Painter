@@ -1,6 +1,5 @@
 import torch
 import pytest
-import copy
 from ddpg.agent import DDPGAgent, soft_update
 from config import TAU
 
@@ -39,10 +38,16 @@ def test_targets_frozen():
 def test_soft_update():
     """soft_update with TAU=0.005 produces (1-TAU)*target_old + TAU*source."""
     agent = DDPGAgent(device=torch.device('cpu'))
+    # Perturb live critic params to break the init-equal symmetry.
+    # Without this, p_before == p_source so the expected value equals p_before
+    # and the assertion would pass even if soft_update is a no-op (tautology).
+    with torch.no_grad():
+        for p in agent.critic.parameters():
+            p.add_(torch.ones_like(p))   # shift all params by +1
     # Clone the first target param before update
     p_before = next(agent.critic_target.parameters()).data.clone()
-    # Read the corresponding source param
-    p_source = next(agent.critic.parameters()).data
+    # Read the corresponding source param (now shifted by +1 vs target)
+    p_source = next(agent.critic.parameters()).data.clone()
     # Apply soft update
     soft_update(agent.critic_target, agent.critic, TAU)
     # Read target param after
