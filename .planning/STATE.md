@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 2 context gathered
-last_updated: "2026-06-09T17:15:56.218Z"
-last_activity: 2026-06-09 -- Phase 02 execution started
+stopped_at: Phase 3 context gathered — ResNet18+CoordConv architecture, ready to plan
+last_updated: "2026-06-10"
+last_activity: 2026-06-10 -- Phase 03 context gathered (ResNet18+CoordConv, 7ch state, WN+TReLU)
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 2
-  percent: 20
+  completed_plans: 4
+  percent: 40
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-08)
 
 **Core value:** The agent produces a demo-able timelapse — you can film the AI painting a target image stroke by stroke, recognizably.
-**Current focus:** Phase 02 — neural-renderer
+**Current focus:** Phase 03 — DDPG Models
 
 ## Current Position
 
-Phase: 02 (neural-renderer) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 02
-Last activity: 2026-06-09 -- Phase 02 execution started
+Phase: 03 (DDPG Models) — CONTEXT GATHERED, READY TO PLAN
+Plan: 0 of TBD
+Status: Context gathered — ResNet18+CoordConv, 7ch state confirmed from paper
+Last activity: 2026-06-10 -- Phase 03 context gathered
 
-Progress: [██░░░░░░░░] 15%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
@@ -70,6 +70,8 @@ Recent decisions affecting current work:
 - Plan 01-02: Subpixel strokes (w/h < ~0.032 at 64x64) return unmodified canvas — correct hard-rasterizer behavior
 - Plan 01-02: theta_01.item() * math.pi — extract scalar before math.cos/sin to avoid TypeError on 0-dim tensor
 - Plan 01-02: torch.meshgrid with indexing='ij' — mandatory explicit kwarg for correctness and no UserWarning
+- Phase 02 autoresearch (2026-06-10): NeuralRenderer CNN replaced by SoftRasterizer — analytical sigmoid SDF, no pretraining, no renderer.pkl. Formula: alpha = sigmoid((w/2-|dx'|)/β)*sigmoid((h/2-|dy'|)/β), β=1.0. NeuralRenderer kept as alias. Compositing: new_canvas = alpha*color + (1-alpha)*old_canvas
+- Phase 02 autoresearch: SoftRasterizer has no learned parameters — freeze verified via .eval()+requires_grad_(False); param_norm assertion passes trivially (no weights to drift)
 
 ### Pending Todos
 
@@ -88,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-09T15:44:42.734Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-neural-renderer/02-CONTEXT.md
+Last session: 2026-06-10
+Stopped at: Phase 3 context gathered — ready to plan
+Resume file: .planning/phases/03-ddpg-models/03-CONTEXT.md
