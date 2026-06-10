@@ -9,19 +9,25 @@ from config import TAU, ACTOR_LR, CRITIC_LR, GAMMA, GRAD_CLIP_CRITIC
 @torch.no_grad()
 def soft_update(target: nn.Module, source: nn.Module, tau: float) -> None:
     """
-    In-place tau-weighted blend: theta_target <- tau*theta + (1-tau)*theta_target.
+    State-dict-based tau-weighted blend: theta_target <- (1-tau)*theta_target + tau*theta.
 
-    Decorated with @torch.no_grad() — gradients must never flow into target networks.
-    Uses in-place ops (mul_ / add_) to avoid allocating new tensors.
+    Uses state_dict / load_state_dict to correctly handle weight-norm parametrized
+    modules (e.g. the critic). Mutating the derived .weight tensor directly is a
+    no-op on parametrized modules because the parametrization hook recomputes .weight
+    from weight_g and weight_v on every forward pass. state_dict() yields the
+    underlying weight_g, weight_v (and all non-parametrized params) as flat keys,
+    so blending them propagates correctly to every subsequent forward call.
 
     Args:
         target: Target network (frozen copy, updated by soft blend).
         source: Live network (params are read but not modified).
         tau:    Blend rate in (0, 1]. TAU=0.005 per paper Table 1.
     """
-    for p_targ, p in zip(target.parameters(), source.parameters()):
-        p_targ.data.mul_(1.0 - tau)
-        p_targ.data.add_(tau * p.data)
+    target_sd = target.state_dict()
+    source_sd = source.state_dict()
+    for key in target_sd:
+        target_sd[key].mul_(1.0 - tau).add_(tau * source_sd[key])
+    target.load_state_dict(target_sd)
 
 
 class DDPGAgent:
@@ -35,9 +41,10 @@ class DDPGAgent:
 
     Attributes:
         actor (Actor):           Live actor network (policy).
-        critic (Critic):         Live critic network (value estimator V(s')).
+        critic (Critic):         Live critic network (value estimator V(s) — current state).
         actor_target (Actor):    Deepcopy of actor, permanently eval() + frozen.
         critic_target (Critic):  Deepcopy of critic, permanently eval() + frozen.
+                                 Used to bootstrap Bellman target V(s') — never trained directly.
         actor_opt:               Adam optimizer for actor (lr=ACTOR_LR).
         critic_opt:              Adam optimizer for critic (lr=CRITIC_LR).
 
@@ -88,7 +95,7 @@ class DDPGAgent:
           with torch.no_grad():
               v_next = critic_target(next_obs)           # (B, 1) stable V(s')
               y = rew.unsqueeze(1) + GAMMA * v_next * (~done.unsqueeze(1))
-          v_pred = critic(obs)                          # (B, 1) � V(s), NOT next_obs
+          v_pred = critic(obs)                           # (B, 1) V(s) — NOT next_obs
           critic_loss = F.mse_loss(v_pred, y)
           critic_opt.zero_grad()
           critic_loss.backward()
